@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penilaian Kinerja Crew ASN 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 1024px;
+            margin: auto;
+        }
+        .input-group input[type="text"],
+        .input-group select,
+        .score-group input[type="number"] {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+        }
+        .input-group input:focus,
+        .input-group select:focus,
+        .score-group input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+        .score-group label {
+            font-weight: 500;
+            color: #4b5563;
+        }
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+        }
+        thead th:first-child {
+            border-top-left-radius: 8px;
+        }
+        thead th:last-child {
+            border-top-right-radius: 8px;
+        }
+        tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 8px;
+        }
+        tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 8px;
+        }
+        .grade-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+        }
+        .grade-A { background-color: #d1fae5; color: #065f46; }
+        .grade-B { background-color: #dbeafe; color: #1e40af; }
+        .grade-C { background-color: #fef9c3; color: #854d0e; }
+        .grade-D { background-color: #fee2e2; color: #b91c1c; }
+
+        .action-button {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        @media print {
+            body {
+                background-color: #fff;
+                -webkit-print-color-adjust: exact;
+            }
+            .no-print {
+                display: none;
+            }
+            .container {
+                box-shadow: none;
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+
+<div class="container bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
+    <div class="flex items-center mb-6">
+        <img src="https://i.ibb.co/68g60Jd/MBF.png" alt="Moritz Hospitality" class="w-48 h-auto mr-4">
+        <div>
+            <h1 class="text-3xl font-bold mb-2 text-red-600">Penilaian Kinerja Crew ASN 2</h1>
+            <h2 class="text-xl text-gray-600">Formulir Penilaian & Rekapitulasi</h2>
+        </div>
+    </div>
+
+    <!-- Notifikasi -->
+    <div id="notification" class="hidden no-print fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-md transition-opacity duration-500 z-50">
+        Data berhasil disimpan!
+    </div>
+
+    <!-- Statistik Persentase -->
+    <div class="flex flex-col items-center justify-center p-4 mb-8 bg-indigo-50 rounded-lg border border-indigo-200 no-print">
+        <div class="text-4xl font-bold text-indigo-600" id="completionPercentage">0%</div>
+        <div class="text-sm text-gray-600 font-medium">dari <span id="evaluatedCount">0</span>/<span id="totalCrewCount">0</span> crew yang telah dinilai</div>
+    </div>
+
+    <!-- Form Pengisian Nilai -->
+    <div class="mb-8 p-6 bg-indigo-50 rounded-lg border border-indigo-200 no-print">
+        <h3 class="text-2xl font-semibold mb-4 text-indigo-800">Formulir Penilaian Crew</h3>
+        <form id="evaluationForm" class="space-y-4">
+            <input type="hidden" id="editIndex">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="input-group">
+                    <label for="crewName" class="block text-sm font-medium text-gray-700 mb-1">Nama Crew</label>
+                    <input type="text" id="crewName" required placeholder="Masukkan Nama" readonly class="bg-gray-200 cursor-not-allowed">
+                </div>
+                <div class="input-group">
+                    <label for="position" class="block text-sm font-medium text-gray-700 mb-1">Jabatan</label>
+                    <input type="text" id="position" required placeholder="Masukkan Jabatan">
+                </div>
+                <div class="input-group">
+                    <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Departemen</label>
+                    <select id="department" required class="cursor-pointer bg-gray-200 cursor-not-allowed" readonly>
+                        <option value="" disabled selected>Pilih</option>
+                        <option value="Front Office">Front Office</option>
+                        <option value="MEP">MEP</option>
+                        <option value="Housekeeping">Housekeeping</option>
+                        <option value="Gardener">Gardener</option>
+                        <option value="Decomposer">Decomposer</option>
+                        <option value="Security">Security</option>
+                        <option value="Supervisor">Supervisor</option>
+                        <option value="Manager Operational">Manager Operational</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr class="border-t border-indigo-200 my-4">
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 score-group">
+                <div class="space-y-2">
+                    <label for="score1" class="block text-sm">Pengetahuan</label>
+                    <p class="text-xs text-gray-500 italic">(Nama/fungsi alat, metode, estimasi)</p>
+                    <input type="number" id="score1" min="0" max="100" required placeholder="0-100">
+                </div>
+                <div class="space-y-2">
+                    <label for="score2" class="block text-sm">Kedisiplinan</label>
+                    <p class="text-xs text-gray-500 italic">(Absensi, berkendara, seragam, penyimpanan)</p>
+                    <input type="number" id="score2" min="0" max="100" required placeholder="0-100">
+                </div>
+                <div class="space-y-2">
+                    <label for="score3" class="block text-sm">Attitude</label>
+                    <p class="text-xs text-gray-500 italic">(Salam, senyum, sapa, sopan, ramah)</p>
+                    <input type="number" id="score3" min="0" max="100" required placeholder="0-100">
+                </div>
+            </div>
+            <div class="flex justify-center mt-6">
+                <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-md">Simpan Penilaian</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistik Kualifikasi -->
+    <div id="qualificationStats" class="mt-8 mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+        <h3 class="text-2xl font-semibold mb-4 text-blue-800">Rekapitulasi Kualifikasi</h3>
+        <table class="w-full text-left rounded-lg overflow-hidden shadow-md">
+            <thead class="bg-blue-600 text-white">
+                <tr>
+                    <th class="p-4 text-sm font-semibold rounded-tl-lg">Kriteria</th>
+                    <th class="p-4 text-sm font-semibold text-center">A (90-100)</th>
+                    <th class="p-4 text-sm font-semibold text-center">B (80-89.9)</th>
+                    <th class="p-4 text-sm font-semibold text-center">C (70-79.9)</th>
+                    <th class="p-4 text-sm font-semibold text-center rounded-tr-lg">D (<70)</th>
+                </tr>
+            </thead>
+            <tbody id="qualificationTableBody" class="bg-white divide-y divide-gray-200">
+                <!-- Data akan diisi oleh JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tabel Rekapitulasi -->
+    <div id="recap_container">
+        <h3 class="text-2xl font-semibold mb-4 text-gray-800">Rekapitulasi Penilaian</h3>
+        <div id="recapTable">
+            <!-- Tabel akan diisi oleh JavaScript -->
+        </div>
+    </div>
+
+    <!-- Skala Penilaian -->
+    <div class="mt-8 p-6 bg-gray-50 rounded-lg shadow-inner border border-gray-200">
+        <h2 class="text-xl font-bold mb-2 text-gray-800">Keterangan Nilai</h2>
+        <ul class="list-disc list-inside text-gray-700 space-y-1 text-sm">
+            <li><span class="font-semibold text-green-700">Nilai A (90% - 100%)</span>: Performa di atas ekspektasi, sangat baik.</li>
+            <li><span class="font-semibold text-indigo-700">Nilai B (80% - 89.9%)</span>: Performa melampaui ekspektasi.</li>
+            <li><span class="font-semibold text-yellow-700">Nilai C (70% - 79.9%)</span>: Performa memenuhi ekspektasi.</li>
+            <li><span class="font-semibold text-red-700">Nilai D (&lt; 70%)</span>: Performa perlu peningkatan.</li>
+        </ul>
+    </div>
+
+    <!-- Tombol Cetak PDF -->
+    <div class="flex justify-center mt-8 no-print">
+        <button onclick="window.print()" class="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors shadow-md">
+            Cetak ke PDF
+        </button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let crewEvaluations = JSON.parse(localStorage.getItem('crewEvaluations')) || [];
+    const form = document.getElementById('evaluationForm');
+    const recapTableContainer = document.getElementById('recapTable');
+    const notification = document.getElementById('notification');
+    const completionPercentage = document.getElementById('completionPercentage');
+    const evaluatedCount = document.getElementById('evaluatedCount');
+    const totalCrewCount = document.getElementById('totalCrewCount');
+    const crewNameInput = document.getElementById('crewName');
+    const positionInput = document.getElementById('position');
+    const departmentInput = document.getElementById('department');
+    const qualificationTableBody = document.getElementById('qualificationTableBody');
+
+    let masterCrewList = [
+        // Manager Operational
+        { name: 'Muhammad Rafly Zakaria', department: 'Manager Operational', tower: '5,6,8' },
+
+        // Supervisor
+        { name: 'Rismah Balalembang', department: 'Supervisor', tower: '5' },
+        { name: 'Willy Baldus Santo', department: 'Supervisor', tower: '6' },
+        { name: 'Rosa Valentin', department: 'Supervisor', tower: '8' },
+
+        // Front Office
+        { name: 'Harris', department: 'Front Office', tower: '5' },
+        { name: 'Intan Ayuningtias', department: 'Front Office', tower: '5' },
+        { name: 'Virgo Yunita B', department: 'Front Office', tower: '5' },
+        { name: 'Uci Rante Toding', department: 'Front Office', tower: '5' },
+        { name: 'Alfrida Mata Raga', department: 'Front Office', tower: '6' },
+        { name: 'Jesika Chatrine Patiung', department: 'Front Office', tower: '6' },
+        { name: 'Novita Ayu Limbongan', department: 'Front Office', tower: '6' },
+        { name: 'Muhammad Irsadu I', department: 'Front Office', tower: '6' },
+        { name: 'Iin Indriana Ningsih', department: 'Front Office', tower: '8' },
+        { name: 'Dewi Marselin P', department: 'Front Office', tower: '8' },
+        { name: 'Eka Fitri Rahmadani', department: 'Front Office', tower: '8' },
+        { name: 'Al Jahrir', department: 'Front Office', tower: '8' },
+
+        // MEP
+        { name: 'Abdul Suarna', department: 'MEP', tower: '5' },
+        { name: 'Andi Mufla', department: 'MEP', tower: '6' },
+        { name: 'M Raehan', department: 'MEP', tower: '6' },
+        { name: 'Advent Silnombing', department: 'MEP', tower: '8' },
+        
+        // Housekeeping - Tower 5
+        { name: 'Ayu Ananda Putri', department: 'Housekeeping', tower: '5' },
+        { name: 'Agustina Rembon', department: 'Housekeeping', tower: '5' },
+        { name: 'Krisnawati Daniel', department: 'Housekeeping', tower: '5' },
+        { name: 'Anatasia Kemba', department: 'Housekeeping', tower: '5' },
+        { name: 'Ijhel Adelina', department: 'Housekeeping', tower: '5' },
+        { name: 'Yuni Ayu Widayanti', department: 'Housekeeping', tower: '5' },
+        { name: 'Mullana', department: 'Housekeeping', tower: '5' },
+        { name: 'Feby Sore', department: 'Housekeeping', tower: '5' },
+        { name: 'Anita Imratu S', department: 'Housekeeping', tower: '5' },
+        { name: 'Aisyah Wulandari', department: 'Housekeeping', tower: '5' },
+        { name: 'Widya', department: 'Housekeeping', tower: '5' },
+        { name: 'Olivia Engelia P', department: 'Housekeeping', tower: '5' },
+        { name: 'Melinda Marthen', department: 'Housekeeping', tower: '5' },
+        { name: 'Apriyanti', department: 'Housekeeping', tower: '5' },
+        { name: 'Siti Wasillatur Rahmah', department: 'Housekeeping', tower: '5' },
+        { name: 'Shan Eliser', department: 'Housekeeping', tower: '5' },
+        { name: 'Yehezkiel P', department: 'Housekeeping', tower: '5' },
+        { name: 'Umrah Apriliani', department: 'Housekeeping', tower: '5' },
+        { name: 'Nuri Agustina', department: 'Housekeeping', tower: '5' },
+        { name: 'Hafidz Hagani', department: 'Housekeeping', tower: '5' },
+        { name: 'Abi Nurahman', department: 'Housekeeping', tower: '5' },
+        { name: 'Yudha Nur Fadilah', department: 'Housekeeping', tower: '5' },
+        { name: 'Muhammad Agus Tohir', department: 'Housekeeping', tower: '5' },
+
+        // Housekeeping - Tower 6
+        { name: 'Agnes Kaha', department: 'Housekeeping', tower: '6' },
+        { name: 'Ardiansyah', department: 'Housekeeping', tower: '6' },
+        { name: 'Aidil Fahrianur', department: 'Housekeeping', tower: '6' },
+        { name: 'Amelia Sahra', department: 'Housekeeping', tower: '6' },
+        { name: 'Destri Natalia Sa\'pang', department: 'Housekeeping', tower: '6' },
+        { name: 'Diva Restu Syabila', department: 'Housekeeping', tower: '6' },
+        { name: 'Darma Tullah', department: 'Housekeeping', tower: '6' },
+        { name: 'Elisabeth', department: 'Housekeeping', tower: '6' },
+        { name: 'Eka Prasetya', department: 'Housekeeping', tower: '6' },
+        { name: 'Flouryel Marselino P.', department: 'Housekeeping', tower: '6' },
+        { name: 'Jainal Abidin', department: 'Housekeeping', tower: '6' },
+        { name: 'Lisa', department: 'Housekeeping', tower: '6' },
+        { name: 'Kristian Daniel', department: 'Housekeeping', tower: '6' },
+        { name: 'Muhammad Raffi', department: 'Housekeeping', tower: '6' },
+        { name: 'Prima Pebri Wahyu P.', department: 'Housekeeping', tower: '6' },
+        { name: 'Reni Salle', department: 'Housekeeping', tower: '6' },
+        { name: 'Sophia', department: 'Housekeeping', tower: '6' },
+        { name: 'Wahana Yosep T', department: 'Housekeeping', tower: '6' },
+        { name: 'Widia Kristi', department: 'Housekeeping', tower: '6' },
+        { name: 'Linda Lestari', department: 'Housekeeping', tower: '6' },
+
+        // Housekeeping - Tower 8
+        { name: 'Rehan', department: 'Housekeeping', tower: '8' },
+        { name: 'Jefrison Pernando', department: 'Housekeeping', tower: '8' },
+        { name: 'Fachri Nur Rahman', department: 'Housekeeping', tower: '8' },
+        { name: 'Christho Layuk Lembang', department: 'Housekeeping', tower: '8' },
+        { name: 'Fauzi', department: 'Housekeeping', tower: '8' },
+        { name: 'Padllansyah', department: 'Housekeeping', tower: '8' },
+        { name: 'Dimas Yoga Setiawan', department: 'Housekeeping', tower: '8' },
+        { name: 'Ahmad Syahroni', department: 'Housekeeping', tower: '8' },
+        { name: 'Selfiah', department: 'Housekeeping', tower: '8' },
+        { name: 'Maria Satrin Jie', department: 'Housekeeping', tower: '8' },
+        { name: 'Yetty Zhahrani Kartika', department: 'Housekeeping', tower: '8' },
+        { name: 'Yuni', department: 'Housekeeping', tower: '8' },
+        { name: 'Martini Ride', department: 'Housekeeping', tower: '8' },
+        { name: 'Yulla', department: 'Housekeeping', tower: '8' },
+        { name: 'Puteri Apriliani', department: 'Housekeeping', tower: '8' },
+        { name: 'Ririn', department: 'Housekeeping', tower: '8' },
+        { name: 'Ewilia Nona', department: 'Housekeeping', tower: '8' },
+        { name: 'Valerina Vanya', department: 'Housekeeping', tower: '8' },
+        { name: 'Ewilia Nona', department: 'Housekeeping', tower: '8' },
+        { name: 'Attril Mada', department: 'Housekeeping', tower: '8' },
+        { name: 'Ema Darma', department: 'Housekeeping', tower: '8' },
+        { name: 'Dina Damayanti S', department: 'Housekeeping', tower: '8' },
+        { name: 'Febry Syahputri', department: 'Housekeeping', tower: '8' },
+        { name: 'Zakaria', department: 'Housekeeping', tower: '8' },
+        { name: 'Dw', department: 'Housekeeping', tower: '8' },
+        
+        // Gardener
+        { name: 'Kartia', department: 'Gardener', tower: '5' },
+        { name: 'Juliana', department: 'Gardener', tower: '5' },
+        { name: 'Martha', department: 'Gardener', tower: '6' },
+        { name: 'Ega Renikumala', department: 'Gardener', tower: '6' },
+        { name: 'Juminah', department: 'Gardener', tower: '8' },
+        { name: 'Susan Gustafa', department: 'Gardener', tower: '8' },
+
+        // Decomposer
+        { name: 'Ernawati', department: 'Decomposer', tower: '6' },
+
+        // Security
+        { name: 'Patarru Paliran', department: 'Security', tower: '5' },
+        { name: 'Joko Argi Susilo', department: 'Security', tower: '5' },
+        { name: 'Rizki Aprildhan', department: 'Security', tower: '5' },
+        { name: 'Akhmad Rijani', department: 'Security', tower: '5' },
+        { name: 'Ivan Ferdinan', department: 'Security', tower: '5' },
+        { name: 'Muhammad Bagas P', department: 'Security', tower: '5' },
+        { name: 'Fandy Alnes P', department: 'Security', tower: '5' },
+        { name: 'Kaharudin', department: 'Security', tower: '5' },
+        { name: 'Muhammad Ilham Ali Mustofa', department: 'Security', tower: '5' },
+        { name: 'Alfian Nur', department: 'Security', tower: '6' },
+        { name: 'Danu Mubarbok', department: 'Security', tower: '6' },
+        { name: 'Dicky Gilang Nur Adha', department: 'Security', tower: '6' },
+        { name: 'Muhammad Isnain', department: 'Security', tower: '6' },
+        { name: 'Suryanto', department: 'Security', tower: '6' },
+        { name: 'Rohid Mahessa', department: 'Security', tower: '6' },
+        { name: 'Muhammad Riduan', department: 'Security', tower: '6' },
+        { name: 'Misbah', department: 'Security', tower: '6' },
+        { name: 'Agustinus', department: 'Security', tower: '8' },
+        { name: 'Risnawati', department: 'Security', tower: '8' },
+        { name: 'Randi', department: 'Security', tower: '8' },
+        { name: 'Syarifuddin', department: 'Security', tower: '8' },
+        { name: 'Gerfasius', department: 'Security', tower: '8' },
+        { name: 'Agustinus', department: 'Security', tower: '8' },
+        { name: 'Muhammad Faisal', department: 'Security', tower: '8' },
+        { name: 'Ilham S', department: 'Security', tower: '8' },
+        { name: 'M Syarif', department: 'Security', tower: '8' },
+        { name: 'Ismail S', department: 'Security', tower: '8' },
+        { name: 'Yahya', department: 'Security', tower: '8' },
+        { name: 'Antonius', department: 'Security', tower: '8' },
+    ];
+
+    const showNotification = (message, isSuccess = true) => {
+        notification.textContent = message;
+        notification.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'opacity-0');
+        notification.classList.add(isSuccess ? 'bg-green-500' : 'bg-red-500', 'opacity-100');
+        setTimeout(() => {
+            notification.classList.remove('opacity-100');
+            notification.classList.add('opacity-0');
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 500);
+        }, 3000);
+    };
+
+    const getGradeBadge = (grade) => {
+        let colorClass = '';
+        switch(grade) {
+            case 'A': colorClass = 'grade-A'; break;
+            case 'B': colorClass = 'grade-B'; break;
+            case 'C': colorClass = 'grade-C'; break;
+            case 'D': colorClass = 'grade-D'; break;
+        }
+        return `<span class="grade-badge ${colorClass}">${grade}</span>`;
+    };
+
+    const getNotesByGrade = (grade) => {
+        switch(grade) {
+            case 'A': return 'Performa di atas ekspektasi, sangat baik.';
+            case 'B': return 'Performa melampaui ekspektasi.';
+            case 'C': return 'Performa memenuhi ekspektasi.';
+            case 'D': return 'Performa perlu peningkatan.';
+            default: return 'Data penilaian direkam.';
+        }
+    };
+
+    const calculateScoreAndGrade = (score1, score2, score3) => {
+        const totalScore = (score1 + score2 + score3) / 3;
+        let grade = '';
+        if (totalScore >= 90) {
+            grade = 'A';
+        } else if (totalScore >= 80) {
+            grade = 'B';
+        } else if (totalScore >= 70) {
+            grade = 'C';
+        } else {
+            grade = 'D';
+        }
+        return { totalScore, grade };
+    };
+
+    const getGradeFromScore = (score) => {
+        if (score >= 90) return 'A';
+        if (score >= 80) return 'B';
+        if (score >= 70) return 'C';
+        return 'D';
+    };
+
+    const calculateQualificationStats = () => {
+        const stats = {
+            'Pengetahuan': { A: 0, B: 0, C: 0, D: 0 },
+            'Kedisiplinan': { A: 0, B: 0, C: 0, D: 0 },
+            'Attitude': { A: 0, B: 0, C: 0, D: 0 }
+        };
+        const totalEvaluated = crewEvaluations.length;
+
+        if (totalEvaluated === 0) {
+            return stats;
+        }
+
+        crewEvaluations.forEach(crew => {
+            const gradePengetahuan = getGradeFromScore(crew.score1);
+            const gradeKedisiplinan = getGradeFromScore(crew.score2);
+            const gradeAttitude = getGradeFromScore(crew.score3);
+            
+            stats['Pengetahuan'][gradePengetahuan]++;
+            stats['Kedisiplinan'][gradeKedisiplinan]++;
+            stats['Attitude'][gradeAttitude]++;
+        });
+
+        // Convert counts to percentages
+        for (const criteria in stats) {
+            for (const grade in stats[criteria]) {
+                stats[criteria][grade] = ((stats[criteria][grade] / totalEvaluated) * 100).toFixed(1);
+            }
+        }
+
+        return stats;
+    };
+
+    const renderQualificationStats = () => {
+        const stats = calculateQualificationStats();
+        let tableHtml = ``;
+        const criteriaNames = {
+            'Pengetahuan': 'Pengetahuan',
+            'Kedisiplinan': 'Kedisiplinan',
+            'Attitude': 'Attitude'
+        };
+
+        for (const criteria in stats) {
+            tableHtml += `
+                <tr>
+                    <td class="p-4 font-semibold">${criteriaNames[criteria]}</td>
+                    <td class="p-4 text-center">${stats[criteria].A}%</td>
+                    <td class="p-4 text-center">${stats[criteria].B}%</td>
+                    <td class="p-4 text-center">${stats[criteria].C}%</td>
+                    <td class="p-4 text-center">${stats[criteria].D}%</td>
+                </tr>
+            `;
+        }
+        qualificationTableBody.innerHTML = tableHtml;
+    };
+
+
+    const renderTable = () => {
+        recapTableContainer.innerHTML = '';
+        
+        const departments = ['Manager Operational', 'Supervisor', 'Front Office', 'MEP', 'Housekeeping', 'Gardener', 'Decomposer', 'Security'];
+        const evaluatedCountNum = crewEvaluations.length;
+        const totalCrewCountNum = masterCrewList.length;
+        const percentage = totalCrewCountNum > 0 ? (evaluatedCountNum / totalCrewCountNum * 100).toFixed(1) : 0;
+        
+        completionPercentage.textContent = `${percentage}%`;
+        evaluatedCount.textContent = evaluatedCountNum;
+        totalCrewCount.textContent = totalCrewCountNum;
+
+        // Group master crew list by department
+        const crewByDepartment = departments.reduce((acc, dep) => {
+            acc[dep] = masterCrewList.filter(crew => crew.department === dep);
+            return acc;
+        }, {});
+
+        departments.forEach(department => {
+            const departmentData = crewByDepartment[department];
+            if (departmentData.length > 0) {
+                let tableHtml = `
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold mb-2 text-gray-800">${department} (${departmentData.length} Crew)</h4>
+                        <table class="w-full text-left rounded-lg overflow-hidden shadow-md">
+                            <thead class="bg-indigo-600 text-white">
+                                <tr>
+                                    <th class="p-4 text-sm font-semibold rounded-tl-lg">No.</th>
+                                    <th class="p-4 text-sm font-semibold">Nama Crew</th>
+                                    <th class="p-4 text-sm font-semibold">Jabatan</th>
+                                    <th class="p-4 text-sm font-semibold">Tower</th>
+                                    <th class="p-4 text-sm font-semibold text-center">Nilai (%)</th>
+                                    <th class="p-4 text-sm font-semibold text-center">Nilai</th>
+                                    <th class="p-4 text-sm font-semibold">Keterangan</th>
+                                    <th class="p-4 text-sm font-semibold rounded-tr-lg text-center no-print">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                `;
+                departmentData.forEach((crew, index) => {
+                    const evaluatedEntry = crewEvaluations.find(c => c.crewName === crew.name);
+                    
+                    if (evaluatedEntry) {
+                        const originalIndex = crewEvaluations.indexOf(evaluatedEntry);
+                        tableHtml += `
+                            <tr data-index="${originalIndex}">
+                                <td class="p-4">${index + 1}.</td>
+                                <td class="p-4">
+                                    <input type="text" value="${evaluatedEntry.crewName}" onchange="updateCrewName(${originalIndex}, this.value)" class="w-full bg-transparent border border-gray-300 rounded-md p-1 no-print">
+                                    <span class="print-only">${evaluatedEntry.crewName}</span>
+                                </td>
+                                <td class="p-4">${evaluatedEntry.position}</td>
+                                <td class="p-4">${evaluatedEntry.tower || '-'}</td>
+                                <td class="p-4 text-center font-medium text-indigo-600">${evaluatedEntry.totalScore.toFixed(2)}%</td>
+                                <td class="p-4 text-center">${getGradeBadge(evaluatedEntry.grade)}</td>
+                                <td class="p-4 text-sm text-gray-600">${evaluatedEntry.notes}</td>
+                                <td class="p-4 text-center space-x-2 no-print">
+                                    <button type="button" onclick="editEntry(${originalIndex})" class="action-button bg-yellow-500 text-white hover:bg-yellow-600 transition-colors">Edit</button>
+                                    <button type="button" onclick="deleteEntry(${originalIndex})" class="action-button bg-red-500 text-white hover:bg-red-600 transition-colors">Hapus</button>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        tableHtml += `
+                            <tr>
+                                <td class="p-4">${index + 1}.</td>
+                                <td class="p-4 font-semibold text-gray-700">
+                                    <input type="text" value="${crew.name}" onchange="updateMasterCrewName(${index}, this.value)" class="w-full bg-transparent border border-gray-300 rounded-md p-1 no-print">
+                                    <span class="print-only">${crew.name}</span>
+                                </td>
+                                <td class="p-4 text-gray-400 italic">Belum Dinilai</td>
+                                <td class="p-4">${crew.tower || '-'}</td>
+                                <td colspan="3" class="p-4 text-center text-gray-400 italic"></td>
+                                <td class="p-4 text-center no-print">
+                                    <button type="button" onclick="startEvaluation('${crew.name}', '${crew.department}', '${crew.tower || ''}')" class="action-button bg-green-500 text-white hover:bg-green-600 transition-colors">Nilai</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+                tableHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                recapTableContainer.innerHTML += tableHtml;
+            }
+        });
+        renderQualificationStats();
+    };
+    
+    window.updateMasterCrewName = (index, newName) => {
+        const oldName = masterCrewList[index].name;
+        masterCrewList[index].name = newName;
+        crewEvaluations.forEach(crew => {
+            if (crew.crewName === oldName) {
+                crew.crewName = newName;
+            }
+        });
+        localStorage.setItem('masterCrewList', JSON.stringify(masterCrewList));
+        localStorage.setItem('crewEvaluations', JSON.stringify(crewEvaluations));
+        renderTable();
+    };
+
+    window.updateCrewName = (index, newName) => {
+        crewEvaluations[index].crewName = newName;
+        localStorage.setItem('crewEvaluations', JSON.stringify(crewEvaluations));
+        renderTable();
+    };
+
+
+    window.startEvaluation = (name, department, tower) => {
+        crewNameInput.value = name;
+        departmentInput.value = department;
+        positionInput.value = '';
+        document.getElementById('score1').value = '';
+        document.getElementById('score2').value = '';
+        document.getElementById('score3').value = '';
+        document.getElementById('editIndex').value = "";
+        document.querySelector('#evaluationForm button').textContent = 'Simpan Penilaian';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.deleteEntry = (index) => {
+        crewEvaluations.splice(index, 1);
+        localStorage.setItem('crewEvaluations', JSON.stringify(crewEvaluations));
+        renderTable();
+        showNotification('Data berhasil dihapus.', false);
+    };
+
+    window.editEntry = (index) => {
+        const crew = crewEvaluations[index];
+        crewNameInput.value = crew.crewName;
+        positionInput.value = crew.position;
+        departmentInput.value = crew.department;
+        document.getElementById('score1').value = crew.score1;
+        document.getElementById('score2').value = crew.score2;
+        document.getElementById('score3').value = crew.score3;
+        document.getElementById('editIndex').value = index;
+        document.querySelector('#evaluationForm button').textContent = 'Simpan Perubahan';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const crewName = crewNameInput.value;
+        const position = positionInput.value;
+        const department = departmentInput.value;
+        const score1 = parseFloat(document.getElementById('score1').value);
+        const score2 = parseFloat(document.getElementById('score2').value);
+        const score3 = parseFloat(document.getElementById('score3').value);
+        
+        const { totalScore, grade } = calculateScoreAndGrade(score1, score2, score3);
+        const notes = getNotesByGrade(grade);
+        const tower = masterCrewList.find(c => c.name === crewName)?.tower || '-';
+
+        const newCrew = {
+            crewName,
+            position,
+            department,
+            tower,
+            score1,
+            score2,
+            score3,
+            totalScore,
+            grade,
+            notes
+        };
+
+        const editIndex = document.getElementById('editIndex').value;
+        if (editIndex !== "") {
+            crewEvaluations[editIndex] = newCrew;
+            document.getElementById('editIndex').value = "";
+            document.querySelector('#evaluationForm button').textContent = 'Simpan Penilaian';
+            showNotification('Data berhasil diubah.');
+        } else {
+            crewEvaluations.push(newCrew);
+            showNotification('Data berhasil disimpan.');
+        }
+        
+        localStorage.setItem('crewEvaluations', JSON.stringify(crewEvaluations));
+        renderTable();
+        form.reset();
+        crewNameInput.value = '';
+        departmentInput.value = '';
+    });
+
+    const savedMasterList = localStorage.getItem('masterCrewList');
+    if (savedMasterList) {
+        masterCrewList = JSON.parse(savedMasterList);
+    } else {
+        localStorage.setItem('masterCrewList', JSON.stringify(masterCrewList));
+    }
+
+    renderTable();
+});
+</script>
+
+</body>
+</html>
